@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title>mission_5-01</title>
+</head>
+<body>
+    <?php
+    // DB接続設定
+    //自分に割り当てられたユーザーネームとかパスワードを設定
+    $dsn = "データベース名";
+    $user = 'ユーザー名';
+    $password = 'パスワード';
+    $pdo = new PDO($dsn, $user, $password, array(PDO::ATTR_ERRMODE => PDO::ERRMODE_WARNING));
+    
+    // テーブル作成
+    $sql = "CREATE TABLE IF NOT EXISTS tbtest" //ここでテーブル名を定義
+    ." ("
+    . "id INT AUTO_INCREMENT PRIMARY KEY,"
+    . "DBname char(32)," 
+    . "DBcom TEXT,"
+    . "DBdate char(32),"
+    . "DBpass char(32)"
+    .");";
+    $stmt = $pdo->query($sql);
+    
+    
+    
+    $x = "";
+    $v = "";
+    $w = "";
+    $err = false;
+    if ($_SERVER ['REQUEST_METHOD'] == 'POST'){
+        if(isset($_POST['submit3'])){
+            $edit_num = $_POST["edit_num"];
+            $pass_edi = $_POST["pass3"];
+            if (isset($edit_num) && $pass_edi!=""){
+                // 4-6のwhereを使うやつから指定したidだけ$resultsに入れる
+                //ここの変数を直してね
+                $id = $edit_num; // idがこの値のデータだけを抽出したい、とする
+                $sql = 'SELECT * FROM tbtest WHERE id=:id ';
+                $stmt = $pdo->prepare($sql);                  
+                $stmt->bindParam(':id', $id, PDO::PARAM_INT); 
+                $stmt->execute();
+                $results = $stmt->fetchAll();
+                foreach ($results as $row){
+                    // パスワードが正しいかチェック
+                    if ($pass_edi==$row["DBpass"]){
+                        $v = $row["DBname"];
+                        $w = $row["DBcom"];
+                        $x = $edit_num;
+                    }
+                }
+            }
+        }
+    }
+    ?>
+    <h3>おすすめの映画やアニメを教えてください</h3>
+    パスワードはこちらから見えてしまうので普段使うものは避けてください。<br><br>
+    <form action="" method="post">
+        <!--インプット欄-->
+        コメント投稿<br>
+        <input type="text" placeholder="名前" name="str_name" value="<?php echo $v; ?>">
+        <input type="text" placeholder="コメント" name="str_com" value="<?php echo $w; ?>">
+        <input type="hidden" placeholder="編集中" name="editing_num" value="<?php echo $x; ?>">
+        <input type="password" name="pass1" placeholder="パスワード">
+        <input type="submit" name="submit1"><br>
+        コメント削除<br>
+        <input type="number" placeholder="半角数字" name="del">
+        <input type="password" name="pass2" placeholder="パスワード">
+        <input type="submit" name="submit2" value="削除"><br>
+        コメント編集<br>
+        <input type="number" placeholder="半角数字" name="edit_num"> 
+        <input type="password" name="pass3" placeholder="パスワード">
+        <input type="submit" name="submit3" value="編集">
+        <!--<input type="text" name="edit_com" value="編集コメント">-->
+        
+    </form>
+    
+    <?php
+    if(isset($_POST['submit1'])||isset($_POST['submit2'])){
+        $name = $_POST["str_name"];
+        $com = $_POST["str_com"];
+        $del = $_POST["del"];
+        $edit_num = $_POST["edit_num"];
+        $filename="mission_3-4.txt";
+        $pass_pos = $_POST["pass1"];
+        $pass_del = $_POST["pass2"];
+        $pass_edi = $_POST["pass3"];
+        $editing_num = $_POST["editing_num"];
+        $date = date("Y/m/d H:i:s");
+    }
+    
+    // コメントの追加処理、最初のif文で送信ボタンが押されたか判定    
+    if(isset($_POST['submit1'])){
+        if ($name!="" && $com!=""){
+            $sql = 'SELECT * FROM tbtest';
+            $stmt = $pdo->query($sql);
+            $results = $stmt->fetchAll();
+            foreach ($results as $row){
+                $last=$row["id"];
+            }
+            // 新規投稿（編集番号が空）
+            if ($editing_num==""){
+                //4-5のコードを持ってきてね
+                //変数とかを変更してね
+                // コメント追加
+                $sql = $pdo -> prepare("INSERT INTO tbtest (DBname, DBcom,DBdate,DBpass) VALUES (:DBname, :DBcom,:DBdate,:DBpass)");
+                $sql -> bindParam(':DBname', $DBname, PDO::PARAM_STR);
+                $sql -> bindParam(':DBcom', $DBcom, PDO::PARAM_STR);
+                $sql -> bindParam(':DBdate', $DBdate, PDO::PARAM_STR);
+                $sql -> bindParam(':DBpass', $DBpass, PDO::PARAM_STR);
+                $DBname = $name;
+                $DBcom = $com; 
+                $DBdate= $date;
+                $DBpass= $pass_pos;
+                $sql -> execute();
+            
+            // 数字が大きいとき
+            }elseif ($editing_num>$last){
+                //4-5のコードを持ってきてね
+                //変数とかを変更してね
+                // コメント追加
+                $sql = $pdo -> prepare("INSERT INTO tbtest (DBname, DBcom,DBdate,DBpass) VALUES (:DBname, :DBcom,:DBdate,:DBpass)");
+                $sql -> bindParam(':DBname', $DBname, PDO::PARAM_STR);
+                $sql -> bindParam(':DBcom', $DBcom, PDO::PARAM_STR);
+                $sql -> bindParam(':DBdate', $DBdate, PDO::PARAM_STR);
+                $sql -> bindParam(':DBpass', $DBpass, PDO::PARAM_STR);
+                $DBname = $name;
+                $DBcom = $com; 
+                $DBdate= $date;
+                $DBpass= $pass_pos;
+                $sql -> execute();
+            
+            // 置き換え可能なとき
+            }else{
+                //4-7から編集するコード持ってきてね
+                //変数とかを変えてね
+                // 選択したidのコメントを変更
+                $id = $editing_num; //変更する投稿番号
+                $DBname = $name;
+                $DBcom = $com; 
+                $DBdate= $date;
+                $DBpass= $pass_pos;
+                $sql = 'UPDATE tbtest SET DBname=:DBname,DBcom=:DBcom,DBdate=:DBdate,DBpass=:DBpass WHERE id=:id';
+                $stmt = $pdo->prepare($sql);
+                $stmt->bindParam(':DBname', $DBname, PDO::PARAM_STR);
+                $stmt->bindParam(':DBcom', $DBcom, PDO::PARAM_STR);
+                $stmt->bindParam(':DBdate', $DBdate, PDO::PARAM_STR);
+                $stmt->bindParam(':DBpass', $DBpass, PDO::PARAM_STR);
+                $stmt->bindParam(':id', $id, PDO::PARAM_INT);
+                $stmt->execute();
+                
+            }
+        }
+    // 削除処理
+    }elseif(isset($_POST['submit2'])){
+        $flag = 0;
+        if ($del!="" && $pass_del!=""){
+            //4-6whereのコードを持ってきてね
+            //変数とかは変えてね
+            // テーブルの内容を出力
+            $id = $del;
+            $sql = 'SELECT * FROM tbtest WHERE id=:id ';
+            $stmt = $pdo->prepare($sql);                  
+            $stmt->bindParam(':id', $id, PDO::PARAM_INT); 
+            $stmt->execute();
+            $results = $stmt->fetchAll(); 
+            foreach($results as $row){
+                if($pass_del==$row["DBpass"]){
+                    //4-8から持ってきてね
+                    //変数とかは変えてね
+                    // 削除
+                    $id = $del; //削除する投稿番号
+                    $sql = 'delete from tbtest where id=:id';
+                    $stmt = $pdo->prepare($sql);
+                    $stmt->bindParam(':id', $id, PDO::PARAM_INT);
+                    $stmt->execute();
+                }
+            }
+        }
+    }
+    
+    // 表示
+    //どんな操作をしても必ずここで表示する
+    //4-6から持ってきてね
+    //変数とかは変えてね
+    // テーブルの内容を出力
+    $sql = 'SELECT * FROM tbtest';
+    $stmt = $pdo->query($sql);
+    $results = $stmt->fetchAll();
+    foreach ($results as $row){
+        //$rowの中にはテーブルのカラム名が入る
+        echo $row['id'].',';
+        echo $row['DBname'].',';
+        echo $row['DBcom'].",";
+        echo $row["DBdate"].'<br>';
+    }
+        
+    ?>
+    
+</body>
